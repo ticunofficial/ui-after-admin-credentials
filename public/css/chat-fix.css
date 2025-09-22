@@ -1,0 +1,20 @@
+.chat__area-header {
+    height: 83px !important;
+    min-height: 83px !important;
+    max-height: 83px !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Make active and archive chat sections scrollable */
+#chatPeopleBody, #archivePeopleBody {
+    overflow-y: auto !important;
+    max-height: calc(100vh - 200px) !important;
+    flex: 1 !important;
+}
+
+.chat__people-body.tab-pane {
+    overflow-y: auto !important;
+    height: 100% !important;
+    flex: 1 !important;
+}

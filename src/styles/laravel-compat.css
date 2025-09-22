@@ -1,0 +1,147 @@
+/* Laravel compatibility styles */
+.app {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+.app-header {
+  background-color: #fff;
+  border-bottom: 1px solid #e3e6f0;
+  height: 60px;
+}
+
+.sidebar {
+  width: 256px;
+  background-color: #fff;
+  border-right: 1px solid #e3e6f0;
+  transition: width 0.3s ease;
+}
+
+.sidebar.sidebar-minimized {
+  width: 64px;
+}
+
+.sidebar.sidebar-minimized .nav-link span {
+  display: none;
+}
+
+.sidebar.sidebar-minimized .brand-text {
+  display: none;
+}
+
+.sidebar-inner-header {
+  padding: 1rem;
+  border-bottom: 1px solid #e3e6f0;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.navbar-brand-minimized {
+  margin-right: 1rem;
+}
+
+.brand-text {
+  display: flex;
+}
+
+.nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  width: 100%;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: #6c757d;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.nav-icon {
+  width: 16px;
+  margin-right: 1rem;
+  text-align: center;
+}
+
+.main {
+  margin-left: 256px;
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
+}
+
+.main.main-collapsed {
+  margin-left: 64px;
+}
+
+.brand-name-infy {
+  color: #007bff;
+  font-weight: 700;
+}
+
+.brand-name-chat {
+  color: #6f42c1;
+  font-weight: 700;
+}
+
+.navbar-brand-minimized {
+  width: 30px;
+  height: 30px;
+}
+
+.img-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.profile-name {
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.nav-link {
+  color: #6c757d;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.nav-link.active {
+  color: #007bff;
+  background-color: #e3f2fd;
+  border-right: 2px solid #007bff;
+}
+
+.app-footer {
+  background-color: #fff;
+  border-top: 1px solid #e3e6f0;
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.img-400x400 {
+  width: 400px;
+  height: 400px;
+  object-fit: cover;
+}

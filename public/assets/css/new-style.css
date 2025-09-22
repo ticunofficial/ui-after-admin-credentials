@@ -1,0 +1,12 @@
+.app-header-N {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    display: flex;
+    z-index: 1030; /* typically above sidebar */
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0rem;
+    height: 56px;
+    background-color: #16213e;
+}
