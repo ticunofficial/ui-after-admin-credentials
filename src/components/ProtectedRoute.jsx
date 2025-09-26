@@ -1,4 +1,6 @@
 import { usePermissions } from '../contexts/PermissionContext'
+import { useAuth } from '../contexts/AuthContext'
+import { Navigate } from 'react-router-dom'
 
 const ProtectedRoute = ({ 
   children, 
@@ -7,7 +9,15 @@ const ProtectedRoute = ({
   requireAll = false,
   fallback = null 
 }) => {
-  const { hasAnyPermission, hasAllPermissions, hasAnyRole, isSuperAdmin, loading } = usePermissions()
+  const { isAuthenticated, loading: authLoading } = useAuth()
+  const { hasAnyPermission, hasAllPermissions, hasAnyRole, isSuperAdmin, loading: permLoading } = usePermissions()
+  
+  // Check authentication first
+  if (!isAuthenticated && !authLoading) {
+    return <Navigate to="/login" replace />
+  }
+  
+  const loading = authLoading || permLoading
 
   if (loading) {
     return (

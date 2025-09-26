@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../services/api'
+import { isTokenExpired, clearAuthData } from '../utils/auth'
 
 const AuthContext = createContext()
 
@@ -29,16 +30,22 @@ export const AuthProvider = ({ children }) => {
   }, [token])
   
   const checkSessionExpiry = () => {
+    const token = localStorage.getItem('token')
     const sessionExpiry = localStorage.getItem('session_expiry')
     const rememberMe = localStorage.getItem('remember_me') === 'true'
     const socialLogin = localStorage.getItem('social_login') === 'true'
+    
+    // Check JWT token expiry first
+    if (token && isTokenExpired(token)) {
+      logout()
+      return
+    }
     
     if (sessionExpiry) {
       const expiryDate = new Date(sessionExpiry)
       const now = new Date()
       
       if (now > expiryDate) {
-        // Session expired - logout
         logout()
         return
       }
@@ -92,16 +99,18 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.get('/logout')
+      if (token && !isTokenExpired(token)) {
+        await api.get('/logout')
+      }
     } catch (error) {
-      console.error('Logout API error:', error)
+      // Ignore 401 errors on logout - token already invalid
+      if (error.response?.status !== 401) {
+        console.error('Logout API error:', error)
+      }
     } finally {
       setToken(null)
       setUser(null)
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      localStorage.removeItem('session_expiry')
-      localStorage.removeItem('social_login')
+      clearAuthData()
       delete api.defaults.headers.common['Authorization']
       window.location.href = '/login'
     }

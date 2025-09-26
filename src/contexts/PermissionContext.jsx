@@ -18,7 +18,15 @@ export const PermissionProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchUserPermissions()
+    const token = localStorage.getItem('token')
+    if (token) {
+      fetchUserPermissions()
+    } else {
+      setUserPermissions([])
+      setUserRole(null)
+      setIsSuperAdmin(false)
+      setLoading(false)
+    }
   }, [])
 
   const fetchUserPermissions = async () => {

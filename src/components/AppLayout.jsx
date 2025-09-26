@@ -9,7 +9,7 @@ import api from '../services/api'
 const AppLayout = () => {
   const { user, logout } = useAuth()
   const { theme, resolvedTheme, toggleTheme } = useTheme()
-  const { getFilteredNavigation, userRole, isSuperAdmin } = usePermissions()
+  const { getFilteredNavigation, userRole, isSuperAdmin, loading } = usePermissions()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -54,10 +54,10 @@ const AppLayout = () => {
       name: 'User Management',
       icon: 'fa-users',
       current: location.pathname.includes('users') || location.pathname.includes('roles'),
-      permissions: ['manage users', 'view users', 'manage roles'],
+      permissions: ['manage_users', 'manage_roles'],
       children: [
-        { name: 'Users', href: 'users', icon: 'fa-user', current: location.pathname.includes('users'), permissions: ['manage users', 'view users'] },
-        { name: 'Roles', href: 'roles', icon: 'fa-users-cog', current: location.pathname.includes('roles'), permissions: ['manage roles'] }
+        { name: 'Users', href: 'users', icon: 'fa-user', current: location.pathname.includes('users'), permissions: ['manage_users'] },
+        { name: 'Roles', href: 'roles', icon: 'fa-users-cog', current: location.pathname.includes('roles'), permissions: ['manage_roles'] }
       ]
     },
     { 
@@ -72,77 +72,76 @@ const AppLayout = () => {
       href: 'transactions', 
       icon: 'fa-credit-card', 
       current: location.pathname.includes('transactions'),
-      permissions: ['manage transactions', 'view transactions']
+      permissions: ['view_transactions']
     },
     { 
       name: 'Subscriptions', 
       href: 'subscriptions', 
       icon: 'fa-crown', 
       current: location.pathname.includes('subscriptions'),
-      permissions: ['manage subscriptions', 'view subscriptions', 'purchase subscriptions']
+      permissions: ['manage_subscriptions']
     },
     { 
       name: 'Jobs', 
       href: 'jobs', 
       icon: 'fa-briefcase', 
       current: location.pathname.includes('jobs'),
-      permissions: ['manage jobs', 'view jobs', 'apply jobs']
+      permissions: ['manage_jobs']
     },
     { 
       name: 'Meetings', 
       href: 'meetings', 
       icon: 'fa-video', 
       current: location.pathname.includes('meetings'),
-      permissions: ['manage meetings', 'view meetings', 'join meetings']
+      permissions: ['manage_meetings']
     },
     { 
       name: 'Notifications', 
       href: 'notifications', 
       icon: 'fa-bell', 
-      current: location.pathname.includes('notifications'),
-      permissions: ['manage notifications', 'view notifications']
+      current: location.pathname.includes('notifications')
     },
     { 
       name: 'Payments', 
       href: 'payments', 
       icon: 'fa-credit-card', 
       current: location.pathname.includes('payments'),
-      permissions: ['manage payments', 'view payments']
+      permissions: ['view_payments']
     },
     { 
       name: 'Investors', 
       href: 'investors', 
       icon: 'fa-chart-line', 
       current: location.pathname.includes('investors'),
-      permissions: ['manage investors', 'view investors']
+      permissions: ['manage_investors']
     },
     { 
       name: 'Reported Users', 
       href: 'reported-users', 
       icon: 'fa-flag', 
       current: location.pathname.includes('reported-users'),
-      permissions: ['manage reports', 'view reports']
+      permissions: ['moderate_users']
     },
     { 
       name: 'Parent Groups', 
       href: 'parent-groups', 
       icon: 'fa-layer-group', 
       current: location.pathname.includes('parent-groups'),
-      permissions: ['manage groups', 'view groups']
+      permissions: ['manage_groups']
     },
     { 
       name: 'Groups', 
       href: 'groups', 
       icon: 'fa-users', 
       current: location.pathname.includes('groups'),
-      permissions: ['manage groups', 'view groups']
+      permissions: ['manage_groups']
     },
     { 
       name: 'Blocked Users', 
       href: 'blocked-users', 
       icon: 'fa-user-slash', 
       current: location.pathname.includes('blocked-users'),
-      permissions: ['manage users', 'view users']
+      permissions: ['moderate_users']
     },
     { 
       name: 'Chat Requests', 
@@ -156,60 +155,72 @@ const AppLayout = () => {
       href: 'email-verification', 
       icon: 'fa-envelope-circle-check', 
       current: location.pathname.includes('email-verification'),
-      permissions: ['manage system', 'view system']
+      permissions: ['manage_settings']
     },
     { 
       name: 'Password Reset', 
       href: 'password-reset', 
       icon: 'fa-key', 
       current: location.pathname.includes('password-reset'),
-      permissions: ['manage system', 'view system']
+      permissions: ['manage_settings']
     },
     { 
       name: 'Job Applications', 
       href: 'job-applications', 
       icon: 'fa-file-text', 
       current: location.pathname.includes('job-applications'),
-      permissions: ['manage jobs', 'view jobs', 'apply jobs']
+      permissions: ['manage_jobs']
     },
     { 
       name: 'Frontend CMS', 
       href: 'frontend-cms', 
       icon: 'fa-globe', 
       current: location.pathname.includes('frontend-cms'),
-      permissions: ['manage front cms', 'view front cms']
+      permissions: ['manage_content']
     },
     { 
       name: 'Google Meet', 
       href: 'google-meet', 
       icon: 'fab fa-google', 
       current: location.pathname.includes('google-meet'),
-      permissions: ['manage meetings', 'view meetings']
+      permissions: ['manage_meetings']
     },
     { 
       name: 'Social Auth', 
       href: 'social-auth', 
       icon: 'fa-share-alt', 
       current: location.pathname.includes('social-auth'),
-      permissions: ['manage system', 'view system']
+      permissions: ['manage_settings']
     },
     { 
       name: 'Admin Users', 
       href: 'admin-users', 
       icon: 'fa-user-cog', 
       current: location.pathname.includes('admin-users'),
-      permissions: ['manage users', 'view users']
+      permissions: ['manage_admin_users']
     },
     { 
       name: 'Settings', 
       href: 'settings', 
       icon: 'fa-cog', 
       current: location.pathname.includes('settings'),
-      permissions: ['manage system', 'view system']
+      permissions: ['manage_settings']
     },
   ]
 
   const navigation = getFilteredNavigation(allNavigation)
+
+  // Show loading spinner while permissions are being fetched
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading permissions...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">

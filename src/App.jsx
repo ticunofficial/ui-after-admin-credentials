@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { PermissionProvider } from './contexts/PermissionContext'
 import Home from './pages/Home'
@@ -33,11 +33,41 @@ import GoogleMeet from './pages/GoogleMeet'
 import SocialAuth from './pages/SocialAuth'
 import AdminUsers from './pages/AdminUsers'
 import AccountActivation from './pages/AccountActivation'
+import PaymentForm from './components/Payment/PaymentForm.jsx'
+import PaymentSuccess from './components/Payment/PaymentSuccess.jsx'
+import PaymentCallback from './components/Payment/PaymentCallback.jsx'
+
+// Auth Guard Component
+const AuthGuard = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth()
+  
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  }
+  
+  return isAuthenticated ? children : <Navigate to="/login" replace />
+}
+
+// Guest Guard Component  
+const GuestGuard = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth()
+  
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  }
+  
+  return !isAuthenticated ? children : <Navigate to="/app/dashboard" replace />
+}
 import Navbar from './components/Navbar'
 import ApiTest from './components/ApiTest'
 import ApiTestSuite from './components/ApiTestSuite'
 import DataVerification from './components/DataVerification'
 import AppLayout from './components/AppLayout'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -48,10 +78,12 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-              <Navbar />
-              <Home />
-            </div>
+            <GuestGuard>
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                <Navbar />
+                <Home />
+              </div>
+            </GuestGuard>
           } />
           <Route path="/about" element={
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -65,9 +97,13 @@ function App() {
               <Contact />
             </div>
           } />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<GuestGuard><Login /></GuestGuard>} />
+          <Route path="/register" element={<GuestGuard><Register /></GuestGuard>} />
           <Route path="/activate" element={<AccountActivation />} />
+          <Route path="/payment/:id" element={<PaymentForm />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/failure" element={<div>Payment Failed</div>} />
+          <Route path="/callback" element={<PaymentCallback />} />
           <Route path="/api-test" element={
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
               <Navbar />
@@ -88,31 +124,31 @@ function App() {
           } />
           
           {/* Authenticated Routes with AppLayout */}
-          <Route path="/app" element={<AppLayout />}>
+          <Route path="/app" element={<AuthGuard><AppLayout /></AuthGuard>}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="chat" element={<Chat />} />
-            <Route path="users" element={<Users />} />
-            <Route path="roles" element={<Roles />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="subscriptions" element={<Subscriptions />} />
-            <Route path="jobs" element={<Jobs />} />
-            <Route path="meetings" element={<Meetings />} />
+            <Route path="users" element={<ProtectedRoute permissions={['manage_users']}><Users /></ProtectedRoute>} />
+            <Route path="roles" element={<ProtectedRoute permissions={['manage_roles']}><Roles /></ProtectedRoute>} />
+            <Route path="transactions" element={<ProtectedRoute permissions={['view_transactions']}><Transactions /></ProtectedRoute>} />
+            <Route path="subscriptions" element={<ProtectedRoute permissions={['manage_subscriptions']}><Subscriptions /></ProtectedRoute>} />
+            <Route path="jobs" element={<ProtectedRoute permissions={['manage_jobs']}><Jobs /></ProtectedRoute>} />
+            <Route path="meetings" element={<ProtectedRoute permissions={['manage_meetings']}><Meetings /></ProtectedRoute>} />
             <Route path="notifications" element={<Notifications />} />
-            <Route path="payments" element={<Payments />} />
-            <Route path="investors" element={<Investors />} />
-            <Route path="reported-users" element={<ReportedUsers />} />
-            <Route path="parent-groups" element={<ParentGroups />} />
-            <Route path="groups" element={<Groups />} />
-            <Route path="blocked-users" element={<BlockedUsers />} />
+            <Route path="payments" element={<ProtectedRoute permissions={['view_payments']}><Payments /></ProtectedRoute>} />
+            <Route path="investors" element={<ProtectedRoute permissions={['manage_investors']}><Investors /></ProtectedRoute>} />
+            <Route path="reported-users" element={<ProtectedRoute permissions={['moderate_users']}><ReportedUsers /></ProtectedRoute>} />
+            <Route path="parent-groups" element={<ProtectedRoute permissions={['manage_groups']}><ParentGroups /></ProtectedRoute>} />
+            <Route path="groups" element={<ProtectedRoute permissions={['manage_groups']}><Groups /></ProtectedRoute>} />
+            <Route path="blocked-users" element={<ProtectedRoute permissions={['moderate_users']}><BlockedUsers /></ProtectedRoute>} />
             <Route path="chat-requests" element={<ChatRequests />} />
             <Route path="email-verification" element={<EmailVerification />} />
             <Route path="password-reset" element={<PasswordReset />} />
-            <Route path="job-applications" element={<JobApplications />} />
-            <Route path="frontend-cms" element={<FrontendCMS />} />
+            <Route path="job-applications" element={<ProtectedRoute permissions={['manage_jobs']}><JobApplications /></ProtectedRoute>} />
+            <Route path="frontend-cms" element={<ProtectedRoute permissions={['manage_content']}><FrontendCMS /></ProtectedRoute>} />
             <Route path="google-meet" element={<GoogleMeet />} />
             <Route path="social-auth" element={<SocialAuth />} />
-            <Route path="admin-users" element={<AdminUsers />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="admin-users" element={<ProtectedRoute permissions={['manage_admin_users']}><AdminUsers /></ProtectedRoute>} />
+            <Route path="settings" element={<ProtectedRoute permissions={['manage_settings']}><Settings /></ProtectedRoute>} />
             <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
