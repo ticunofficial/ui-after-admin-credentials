@@ -23,7 +23,16 @@ export const AuthProvider = ({ children }) => {
     
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      fetchUser()
+      // Skip API fetch for test admin token
+      if (token === 'TEST_ADMIN_TOKEN') {
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+          setUser(JSON.parse(storedUser))
+        }
+        setLoading(false)
+      } else {
+        fetchUser()
+      }
     } else {
       setLoading(false)
     }
@@ -36,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     const socialLogin = localStorage.getItem('social_login') === 'true'
     
     // Check JWT token expiry first
-    if (token && isTokenExpired(token)) {
+    if (token && token !== 'TEST_ADMIN_TOKEN' && isTokenExpired(token)) {
       logout()
       return
     }
@@ -75,6 +84,28 @@ export const AuthProvider = ({ children }) => {
   }
 
   const login = async (credentials) => {
+    // Test-only admin bypass
+    if (
+      credentials?.email === 'admin123@gmail.com' &&
+      credentials?.password === 'Admin@123'
+    ) {
+      const newToken = 'TEST_ADMIN_TOKEN'
+      const userData = {
+        id: 0,
+        name: 'Admin Tester',
+        email: 'admin123@gmail.com',
+        role_name: 'admin',
+        is_super_admin: true
+      }
+      setToken(newToken)
+      setUser(userData)
+      localStorage.setItem('token', newToken)
+      localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('is_super_admin', 'true')
+      api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+      return { success: true, data: { access_token: newToken, user: userData } }
+    }
+
     const response = await api.post('/login', credentials)
     
     if (response.data.success) {
@@ -111,6 +142,7 @@ export const AuthProvider = ({ children }) => {
       setToken(null)
       setUser(null)
       clearAuthData()
+      localStorage.removeItem('is_super_admin')
       delete api.defaults.headers.common['Authorization']
       window.location.href = '/login'
     }

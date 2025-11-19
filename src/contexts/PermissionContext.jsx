@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../services/api'
+import { useAuth } from './AuthContext'
 
 const PermissionContext = createContext()
 
@@ -16,18 +17,27 @@ export const PermissionProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(null)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { token } = useAuth()
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      fetchUserPermissions()
+    const hasToken = !!token
+    if (hasToken) {
+      // Short-circuit for test admin bypass
+      if (localStorage.getItem('is_super_admin') === 'true') {
+        setIsSuperAdmin(true)
+        setUserRole('admin')
+        setUserPermissions([])
+        setLoading(false)
+      } else {
+        fetchUserPermissions()
+      }
     } else {
       setUserPermissions([])
       setUserRole(null)
       setIsSuperAdmin(false)
       setLoading(false)
     }
-  }, [])
+  }, [token])
 
   const fetchUserPermissions = async () => {
     try {
