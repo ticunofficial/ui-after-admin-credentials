@@ -18,13 +18,13 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check session expiry on app load
     checkSessionExpiry()
-    
+
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      // Skip API fetch for test admin token
-      if (token === 'TEST_ADMIN_TOKEN') {
+
+      // Skip API fetch for test tokens
+      if (token === 'TEST_ADMIN_TOKEN' || token === 'TEST_USER_TOKEN') {
         const storedUser = localStorage.getItem('user')
         if (storedUser) {
           setUser(JSON.parse(storedUser))
@@ -37,29 +37,32 @@ export const AuthProvider = ({ children }) => {
       setLoading(false)
     }
   }, [token])
-  
+
   const checkSessionExpiry = () => {
     const token = localStorage.getItem('token')
     const sessionExpiry = localStorage.getItem('session_expiry')
     const rememberMe = localStorage.getItem('remember_me') === 'true'
     const socialLogin = localStorage.getItem('social_login') === 'true'
-    
-    // Check JWT token expiry first
-    if (token && token !== 'TEST_ADMIN_TOKEN' && isTokenExpired(token)) {
+
+    if (
+      token &&
+      token !== 'TEST_ADMIN_TOKEN' &&
+      token !== 'TEST_USER_TOKEN' &&
+      isTokenExpired(token)
+    ) {
       logout()
       return
     }
-    
+
     if (sessionExpiry) {
       const expiryDate = new Date(sessionExpiry)
       const now = new Date()
-      
+
       if (now > expiryDate) {
         logout()
         return
       }
-      
-      // Extend session if remember me or social login
+
       if (rememberMe || socialLogin) {
         const newExpiryDate = new Date()
         newExpiryDate.setDate(newExpiryDate.getDate() + 30)
@@ -84,7 +87,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   const login = async (credentials) => {
-    // Test-only admin bypass
+    // ✅ Test-only Admin bypass
     if (
       credentials?.email === 'admin123@gmail.com' &&
       credentials?.password === 'Admin@123'
@@ -97,26 +100,53 @@ export const AuthProvider = ({ children }) => {
         role_name: 'admin',
         is_super_admin: true
       }
+
       setToken(newToken)
       setUser(userData)
       localStorage.setItem('token', newToken)
       localStorage.setItem('user', JSON.stringify(userData))
       localStorage.setItem('is_super_admin', 'true')
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+
       return { success: true, data: { access_token: newToken, user: userData } }
     }
 
+    // ✅ Test-only User bypass
+    if (
+      credentials?.email === 'user123@gmail.com' &&
+      credentials?.password === 'User@123'
+    ) {
+      const newToken = 'TEST_USER_TOKEN'
+      const userData = {
+        id: 1,
+        name: 'User Tester',
+        email: 'user123@gmail.com',
+        role_name: 'user',
+        is_super_admin: false
+      }
+
+      setToken(newToken)
+      setUser(userData)
+      localStorage.setItem('token', newToken)
+      localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('is_super_admin', 'false')
+      api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+
+      return { success: true, data: { access_token: newToken, user: userData } }
+    }
+
+    // Normal backend login
     const response = await api.post('/login', credentials)
-    
+
     if (response.data.success) {
       const { access_token: newToken, user: userData } = response.data.data
-      
+
       setToken(newToken)
       setUser(userData)
       localStorage.setItem('token', newToken)
       localStorage.setItem('user', JSON.stringify(userData))
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
-      
+
       return response.data
     } else {
       throw new Error(response.data.message || 'Login failed')
@@ -130,11 +160,15 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      if (token && !isTokenExpired(token)) {
+      if (
+        token &&
+        token !== 'TEST_ADMIN_TOKEN' &&
+        token !== 'TEST_USER_TOKEN' &&
+        !isTokenExpired(token)
+      ) {
         await api.get('/logout')
       }
     } catch (error) {
-      // Ignore 401 errors on logout - token already invalid
       if (error.response?.status !== 401) {
         console.error('Logout API error:', error)
       }
